@@ -9,21 +9,16 @@ import igrek.projekt4bt.events.GraphicsInitializedEvent;
 import igrek.projekt4bt.graphics.Colors;
 import igrek.projekt4bt.graphics.canvas.enums.Font;
 import igrek.projekt4bt.logic.controller.AppController;
-import igrek.projekt4bt.logic.controller.services.IService;
 
-public class CanvasGraphics extends BaseCanvasGraphics implements IService {
-	
-	private QuickMenu quickMenu;
+public class CanvasGraphics extends BaseCanvasGraphics {
 	
 	public CanvasGraphics(Context context) {
 		super(context);
-		AppController.registerService(this);
 	}
 	
 	@Override
 	public void reset() {
 		super.reset();
-		quickMenu = new QuickMenu();
 	}
 	
 	@Override
@@ -36,8 +31,6 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IService {
 	public void onRepaint() {
 		
 		drawBackground();
-		
-		quickMenu.draw();
 	}
 	
 	private void drawBackground() {
@@ -148,7 +141,16 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IService {
 	//		fontsize0 = fontsize;
 	//	}
 	
-	public void setQuickMenuView(View quickMenuView) {
-		quickMenu.setQuickMenuView(quickMenuView);
+	public void setControlMenuView(View menuView) {
+				
+		//		tvTransposition = (TextView) quickMenuView.findViewById(R.id.tvTransposition);
+		//
+		//		btnTranspose0 = (Button) quickMenuView.findViewById(R.id.btnTranspose0);
+		//		btnTranspose0.setOnClickListener(new View.OnClickListener() {
+		//			@Override
+		//			public void onClick(View v) {
+		//				Logs.info("click 0");
+		//			}
+		//		});
 	}
 }

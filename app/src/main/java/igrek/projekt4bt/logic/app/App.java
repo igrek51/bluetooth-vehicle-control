@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 
 import igrek.projekt4bt.R;
+import igrek.projekt4bt.bluetooth.BTAdapter;
 import igrek.projekt4bt.events.ResizedEvent;
 import igrek.projekt4bt.graphics.gui.GUI;
 import igrek.projekt4bt.logger.Logs;
@@ -16,23 +17,21 @@ import igrek.projekt4bt.logic.controller.dispatcher.IEventObserver;
 public class App extends BaseApp implements IEventObserver {
 	
 	private GUI gui;
-	
-	private AppState state;
+	private BTAdapter bt;
 	
 	public App(AppCompatActivity activity) {
 		super(activity);
 		
-		registerServices();
 		registerEvents();
 		
 		gui = new GUI(activity);
-		state = AppState.NOT_CONNECTED;
+		gui.showControlPanel();
+		
+		keepScreenOn(activity);
+		
+		bt = new BTAdapter();
 		
 		Logs.info("Aplikacja uruchomiona.");
-	}
-	
-	public void registerServices() {
-		
 	}
 	
 	@Override
@@ -55,11 +54,6 @@ public class App extends BaseApp implements IEventObserver {
 			return true;
 		}
 		return false;
-	}
-	
-	@Override
-	public boolean onKeyBack() {
-		return true;
 	}
 	
 	@Override
