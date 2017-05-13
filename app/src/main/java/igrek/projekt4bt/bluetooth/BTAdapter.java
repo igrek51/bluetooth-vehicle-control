@@ -42,35 +42,32 @@ public class BTAdapter implements IEventObserver {
 		Logs.debug("Bluetooth Adapter init...");
 		
 		BluetoothAdapter blueAdapter = BluetoothAdapter.getDefaultAdapter();
-		if (blueAdapter != null) {
-			if (blueAdapter.isEnabled()) {
-				Set<BluetoothDevice> bondedDevices = blueAdapter.getBondedDevices();
-				
-				Logs.info("bonded devices: " + bondedDevices.size());
-				for (BluetoothDevice bt : bondedDevices) {
-					Logs.info("device: " + bt.getName());
-				}
-				
-				BluetoothDevice device = findDevice(bondedDevices);
-				if (device == null) {
-					Logs.error("no bonded device named " + DEVICE_NAME + " found");
-					return;
-				}
-				
-				try {
-					ParcelUuid[] uuids = device.getUuids();
-					BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuids[0].getUuid());
-					socket.connect();
-					outputStream = socket.getOutputStream();
-					inStream = socket.getInputStream();
-					Logs.info("device connected: " + device.getName());
-				} catch (IOException e) {
-					Logs.error("Failed connecting to device: " + e.getMessage());
-				}
-				
-			} else {
-				Logs.error("No appropriate paired devices.");
+		if (blueAdapter != null && blueAdapter.isEnabled()) {
+			
+			Set<BluetoothDevice> bondedDevices = blueAdapter.getBondedDevices();
+			
+			Logs.info("bonded devices: " + bondedDevices.size());
+			for (BluetoothDevice bt : bondedDevices) {
+				Logs.info("device: " + bt.getName());
 			}
+			
+			BluetoothDevice device = findDevice(bondedDevices);
+			if (device == null) {
+				Logs.error("no bonded device named " + DEVICE_NAME + " found");
+				return;
+			}
+			
+			try {
+				ParcelUuid[] uuids = device.getUuids();
+				BluetoothSocket socket = device.createRfcommSocketToServiceRecord(uuids[0].getUuid());
+				socket.connect();
+				outputStream = socket.getOutputStream();
+				inStream = socket.getInputStream();
+				Logs.info("device connected: " + device.getName());
+			} catch (IOException e) {
+				Logs.error("Failed connecting to device: " + e.getMessage());
+			}
+			
 		} else {
 			Logs.error("Bluetooth is disabled.");
 		}

@@ -3,7 +3,6 @@ package igrek.projekt4bt.graphics.canvas;
 
 import android.content.Context;
 import android.view.MotionEvent;
-import android.view.View;
 
 import igrek.projekt4bt.events.GraphicsInitializedEvent;
 import igrek.projekt4bt.graphics.Colors;
@@ -88,33 +87,6 @@ public class CanvasGraphics extends BaseCanvasGraphics {
 		//		}
 	}
 	
-	//	private boolean onScreenClicked(float x, float y) {
-	//
-	//		if (quickMenu.isVisible()) {
-	//
-	//			return quickMenu.onScreenClicked(x, y);
-	//
-	//		} else {
-	//
-	//			Autoscroll autoscroll = AppController.getService(Autoscroll.class);
-	//			if (autoscroll.isRunning()) {
-	//				AppController.sendEvent(new AutoscrollStopUIEvent());
-	//			} else {
-	//
-	//				if (y >= h * GESTURE_AUTOSCROLL_BOTTOM_REGION) {  //kliknięcie na dole ekranu
-	//
-	//					AppController.sendEvent(new AutoscrollStartUIEvent());
-	//
-	//				} else {
-	//
-	//					quickMenu.setVisible(true);
-	//
-	//				}
-	//			}
-	//			return true;
-	//		}
-	//	}
-	
 	//	@Override
 	//	protected void onTouchPointerUp(MotionEvent event) {
 	//		AppController.sendEvent(new FontsizeChangedEvent(fontsize));
@@ -141,16 +113,4 @@ public class CanvasGraphics extends BaseCanvasGraphics {
 	//		fontsize0 = fontsize;
 	//	}
 	
-	public void setControlMenuView(View menuView) {
-				
-		//		tvTransposition = (TextView) quickMenuView.findViewById(R.id.tvTransposition);
-		//
-		//		btnTranspose0 = (Button) quickMenuView.findViewById(R.id.btnTranspose0);
-		//		btnTranspose0.setOnClickListener(new View.OnClickListener() {
-		//			@Override
-		//			public void onClick(View v) {
-		//				Logs.info("click 0");
-		//			}
-		//		});
-	}
 }
