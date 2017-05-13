@@ -12,10 +12,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 
+import igrek.projekt4bt.dispatcher.EventDispatcher;
 import igrek.projekt4bt.events.ResizedEvent;
 import igrek.projekt4bt.graphics.canvas.enums.Align;
 import igrek.projekt4bt.graphics.canvas.enums.Font;
-import igrek.projekt4bt.logic.controller.AppController;
 
 public class BaseCanvasGraphics extends View {
 	
@@ -77,7 +77,7 @@ public class BaseCanvasGraphics extends View {
 		super.onSizeChanged(w, h, oldw, oldh);
 		this.w = getWidth();
 		this.h = getHeight();
-		AppController.sendEvent(new ResizedEvent(w, h));
+		EventDispatcher.sendEvent(new ResizedEvent(w, h));
 	}
 	
 	@Override

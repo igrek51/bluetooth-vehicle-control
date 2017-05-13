@@ -1,4 +1,4 @@
-package igrek.projekt4bt.logic.app;
+package igrek.projekt4bt.logic;
 
 
 import android.support.v7.app.AppCompatActivity;
@@ -8,13 +8,13 @@ import android.widget.FrameLayout;
 
 import igrek.projekt4bt.R;
 import igrek.projekt4bt.bluetooth.BTAdapter;
+import igrek.projekt4bt.dispatcher.AbstractEvent;
+import igrek.projekt4bt.dispatcher.EventDispatcher;
+import igrek.projekt4bt.dispatcher.IEventConsumer;
+import igrek.projekt4bt.dispatcher.IEventObserver;
 import igrek.projekt4bt.events.ResizedEvent;
 import igrek.projekt4bt.graphics.canvas.CanvasGraphics;
 import igrek.projekt4bt.logger.Logs;
-import igrek.projekt4bt.logic.controller.AppController;
-import igrek.projekt4bt.logic.controller.dispatcher.AbstractEvent;
-import igrek.projekt4bt.logic.controller.dispatcher.IEventConsumer;
-import igrek.projekt4bt.logic.controller.dispatcher.IEventObserver;
 
 public class App extends BaseApp implements IEventObserver {
 	
@@ -46,7 +46,7 @@ public class App extends BaseApp implements IEventObserver {
 	
 	@Override
 	public void registerEvents() {
-		AppController.registerEventObserver(ResizedEvent.class, this);
+		EventDispatcher.registerEventObserver(ResizedEvent.class, this);
 	}
 	
 	@Override

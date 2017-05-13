@@ -3,7 +3,7 @@ package igrek.projekt4bt.events;
 
 import android.graphics.Paint;
 
-import igrek.projekt4bt.logic.controller.dispatcher.AbstractEvent;
+import igrek.projekt4bt.dispatcher.AbstractEvent;
 
 public class GraphicsInitializedEvent extends AbstractEvent {
 	

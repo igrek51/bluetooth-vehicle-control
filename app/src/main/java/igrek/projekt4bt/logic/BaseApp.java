@@ -1,4 +1,4 @@
-package igrek.projekt4bt.logic.app;
+package igrek.projekt4bt.logic;
 
 
 import android.app.Activity;
@@ -9,8 +9,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
 
+import igrek.projekt4bt.dispatcher.EventDispatcher;
 import igrek.projekt4bt.logger.Logs;
-import igrek.projekt4bt.logic.controller.AppController;
 
 public class BaseApp {
 	
@@ -28,8 +28,8 @@ public class BaseApp {
 	public BaseApp(AppCompatActivity aActivity) {
 		this.activity = aActivity;
 		
-		// WYCZYSZCZENIE REJESTRU USŁUG I LISTENERÓW EVENTÓW
-		new AppController();
+		// WYCZYSZCZENIE LISTENERÓW EVENTÓW
+		new EventDispatcher();
 		
 		//łapanie niezłapanych wyjątków
 		defaultUEH = Thread.getDefaultUncaughtExceptionHandler();

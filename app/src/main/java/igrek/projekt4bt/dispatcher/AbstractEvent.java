@@ -1,4 +1,4 @@
-package igrek.projekt4bt.logic.controller.dispatcher;
+package igrek.projekt4bt.dispatcher;
 
 public abstract class AbstractEvent {
 	

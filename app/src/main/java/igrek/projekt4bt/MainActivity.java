@@ -8,7 +8,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import igrek.projekt4bt.logger.Logs;
-import igrek.projekt4bt.logic.app.App;
+import igrek.projekt4bt.logic.App;
 
 public class MainActivity extends AppCompatActivity {
 	

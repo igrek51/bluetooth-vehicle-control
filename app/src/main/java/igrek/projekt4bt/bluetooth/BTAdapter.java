@@ -11,9 +11,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Set;
 
+import igrek.projekt4bt.dispatcher.AbstractEvent;
+import igrek.projekt4bt.dispatcher.IEventObserver;
 import igrek.projekt4bt.logger.Logs;
-import igrek.projekt4bt.logic.controller.dispatcher.AbstractEvent;
-import igrek.projekt4bt.logic.controller.dispatcher.IEventObserver;
 
 public class BTAdapter implements IEventObserver {
 	

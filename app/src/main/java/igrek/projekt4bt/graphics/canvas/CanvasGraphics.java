@@ -4,10 +4,8 @@ package igrek.projekt4bt.graphics.canvas;
 import android.content.Context;
 import android.view.MotionEvent;
 
-import igrek.projekt4bt.events.GraphicsInitializedEvent;
 import igrek.projekt4bt.graphics.Colors;
 import igrek.projekt4bt.graphics.canvas.enums.Font;
-import igrek.projekt4bt.logic.controller.AppController;
 
 public class CanvasGraphics extends BaseCanvasGraphics {
 	
@@ -23,7 +21,7 @@ public class CanvasGraphics extends BaseCanvasGraphics {
 	@Override
 	public void init() {
 		setFont(Font.FONT_NORMAL);
-		AppController.sendEvent(new GraphicsInitializedEvent(w, h, paint));
+		//		EventDispatcher.sendEvent(new GraphicsInitializedEvent(w, h, paint));
 	}
 	
 	@Override

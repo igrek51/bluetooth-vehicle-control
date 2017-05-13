@@ -1,4 +1,4 @@
-package igrek.projekt4bt.logic.controller.dispatcher;
+package igrek.projekt4bt.dispatcher;
 
 
 import java.util.ArrayList;
@@ -10,18 +10,43 @@ import igrek.projekt4bt.logger.Logs;
 
 public class EventDispatcher {
 	
+	private static EventDispatcher instance = null;
+	
+	private static EventDispatcher getInstance() {
+		if (instance == null) {
+			instance = new EventDispatcher();
+		}
+		return instance;
+	}
+	
 	private Map<Class<? extends AbstractEvent>, List<IEventObserver>> eventObservers;
 	
 	private List<AbstractEvent> eventsQueue;
 	
-	private boolean dispatching = false;
+	private volatile boolean dispatching = false;
 	
+	/**
+	 * resets previous singleton
+	 */
 	public EventDispatcher() {
 		eventObservers = new HashMap<>();
 		eventsQueue = new ArrayList<>();
+		instance = this;
 	}
 	
-	public void registerEventObserver(Class<? extends AbstractEvent> eventClass, IEventObserver observer) {
+	public static void registerEventObserver(Class<? extends AbstractEvent> eventClass, IEventObserver observer) {
+		getInstance()._registerEventObserver(eventClass, observer);
+	}
+	
+	public static void unregisterEventObserver(IEventObserver observer) {
+		getInstance()._unregisterEventObserver(observer);
+	}
+	
+	public static void sendEvent(AbstractEvent event) {
+		getInstance()._sendEvent(event);
+	}
+	
+	private void _registerEventObserver(Class<? extends AbstractEvent> eventClass, IEventObserver observer) {
 		synchronized (eventObservers) {
 			List<IEventObserver> observers = eventObservers.get(eventClass);
 			if (observers == null) {
@@ -34,7 +59,7 @@ public class EventDispatcher {
 		}
 	}
 	
-	public void unregisterEventObserver(IEventObserver observer) {
+	private void _unregisterEventObserver(IEventObserver observer) {
 		synchronized (eventObservers) {
 			for (Class<? extends AbstractEvent> clazz : eventObservers.keySet()) {
 				List<IEventObserver> observers = eventObservers.get(clazz);
@@ -45,14 +70,14 @@ public class EventDispatcher {
 		}
 	}
 	
-	public void sendEvent(AbstractEvent event) {
+	private void _sendEvent(AbstractEvent event) {
 		synchronized (eventsQueue) {
 			eventsQueue.add(event);
 		}
 		dispatchEvents();
 	}
 	
-	public void clearEventObservers(Class<? extends AbstractEvent> eventClass) {
+	private void clearEventObservers(Class<? extends AbstractEvent> eventClass) {
 		List<IEventObserver> observers = eventObservers.get(eventClass);
 		if (observers != null) {
 			observers.clear();
