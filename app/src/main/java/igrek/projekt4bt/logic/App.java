@@ -3,6 +3,7 @@ package igrek.projekt4bt.logic;
 
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 
@@ -12,7 +13,14 @@ import igrek.projekt4bt.dispatcher.AbstractEvent;
 import igrek.projekt4bt.dispatcher.EventDispatcher;
 import igrek.projekt4bt.dispatcher.IEventConsumer;
 import igrek.projekt4bt.dispatcher.IEventObserver;
+import igrek.projekt4bt.events.ConnectButtonEvent;
+import igrek.projekt4bt.events.DisconnectButtonEvent;
+import igrek.projekt4bt.events.ReloadButtonEvent;
 import igrek.projekt4bt.events.ResizedEvent;
+import igrek.projekt4bt.events.ShootButtonEvent;
+import igrek.projekt4bt.events.ShowInfoEvent;
+import igrek.projekt4bt.events.StatusButtonEvent;
+import igrek.projekt4bt.events.TestButtonEvent;
 import igrek.projekt4bt.graphics.canvas.CanvasGraphics;
 import igrek.projekt4bt.logger.Logs;
 
@@ -41,7 +49,53 @@ public class App extends BaseApp implements IEventObserver {
 		
 		bt = new BTAdapter();
 		
-		Logs.info("Aplikacja uruchomiona.");
+		showInfo("Aplikacja uruchomiona.");
+		
+		bindButtons();
+	}
+	
+	private void showInfo(String message) {
+		Logs.info(message);
+		EventDispatcher.sendEvent(new ShowInfoEvent(message));
+	}
+	
+	private void bindButtons() {
+		activity.findViewById(R.id.buttonConnect).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				EventDispatcher.sendEvent(new ConnectButtonEvent());
+			}
+		});
+		activity.findViewById(R.id.buttonDisconnect).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				EventDispatcher.sendEvent(new DisconnectButtonEvent());
+			}
+		});
+		activity.findViewById(R.id.buttonReload).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				EventDispatcher.sendEvent(new ReloadButtonEvent());
+			}
+		});
+		activity.findViewById(R.id.buttonShoot).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				EventDispatcher.sendEvent(new ShootButtonEvent());
+			}
+		});
+		activity.findViewById(R.id.buttonStatus).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				EventDispatcher.sendEvent(new StatusButtonEvent());
+			}
+		});
+		activity.findViewById(R.id.buttonTest).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				EventDispatcher.sendEvent(new TestButtonEvent());
+			}
+		});
 	}
 	
 	@Override
@@ -83,7 +137,7 @@ public class App extends BaseApp implements IEventObserver {
 		
 	}
 	
-	protected void setFullscreen(boolean full) {
+	private void setFullscreen(boolean full) {
 		int fullscreen_flag = WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
 		if (full) {
 			activity.getWindow().setFlags(fullscreen_flag, fullscreen_flag);

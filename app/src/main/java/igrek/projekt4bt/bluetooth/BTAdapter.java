@@ -12,7 +12,11 @@ import java.io.OutputStream;
 import java.util.Set;
 
 import igrek.projekt4bt.dispatcher.AbstractEvent;
+import igrek.projekt4bt.dispatcher.EventDispatcher;
+import igrek.projekt4bt.dispatcher.IEventConsumer;
 import igrek.projekt4bt.dispatcher.IEventObserver;
+import igrek.projekt4bt.events.ConnectButtonEvent;
+import igrek.projekt4bt.events.ShowInfoEvent;
 import igrek.projekt4bt.logger.Logs;
 
 public class BTAdapter implements IEventObserver {
@@ -24,22 +28,33 @@ public class BTAdapter implements IEventObserver {
 	
 	public BTAdapter() {
 		registerEvents();
-		
-		init();
 	}
 	
 	@Override
 	public void registerEvents() {
-		
+		EventDispatcher.registerEventObserver(ConnectButtonEvent.class, this);
 	}
 	
 	@Override
 	public void onEvent(AbstractEvent event) {
 		
+		event.bind(ConnectButtonEvent.class, new IEventConsumer<ConnectButtonEvent>() {
+			@Override
+			public void accept(ConnectButtonEvent e) {
+				connect();
+			}
+		});
+		
 	}
 	
-	private void init() {
-		Logs.debug("Bluetooth Adapter init...");
+	private void showInfo(String message) {
+		Logs.info(message);
+		EventDispatcher.sendEvent(new ShowInfoEvent(message));
+	}
+	
+	private void connect() {
+		
+		showInfo("Connecting to bluetooth device...");
 		
 		BluetoothAdapter blueAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (blueAdapter != null && blueAdapter.isEnabled()) {
