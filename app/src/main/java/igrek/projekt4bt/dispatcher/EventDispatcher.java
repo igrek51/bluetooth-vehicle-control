@@ -46,6 +46,10 @@ public class EventDispatcher {
 		getInstance()._sendEvent(event);
 	}
 	
+	public static void sendNow(AbstractEvent event) {
+		getInstance()._sendNow(event);
+	}
+	
 	private void _registerEventObserver(Class<? extends AbstractEvent> eventClass, IEventObserver observer) {
 		synchronized (eventObservers) {
 			List<IEventObserver> observers = eventObservers.get(eventClass);
@@ -75,6 +79,10 @@ public class EventDispatcher {
 			eventsQueue.add(event);
 		}
 		dispatchEvents();
+	}
+	
+	private void _sendNow(AbstractEvent event) {
+		dispatch(event);
 	}
 	
 	private void clearEventObservers(Class<? extends AbstractEvent> eventClass) {

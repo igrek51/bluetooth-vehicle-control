@@ -13,6 +13,7 @@ import igrek.projekt4bt.dispatcher.AbstractEvent;
 import igrek.projekt4bt.dispatcher.EventDispatcher;
 import igrek.projekt4bt.dispatcher.IEventConsumer;
 import igrek.projekt4bt.dispatcher.IEventObserver;
+import igrek.projekt4bt.events.ClearButtonEvent;
 import igrek.projekt4bt.events.ConnectButtonEvent;
 import igrek.projekt4bt.events.DisconnectButtonEvent;
 import igrek.projekt4bt.events.ReloadButtonEvent;
@@ -94,6 +95,12 @@ public class App extends BaseApp implements IEventObserver {
 			@Override
 			public void onClick(View v) {
 				EventDispatcher.sendEvent(new TestButtonEvent());
+			}
+		});
+		activity.findViewById(R.id.buttonClear).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				EventDispatcher.sendEvent(new ClearButtonEvent());
 			}
 		});
 	}

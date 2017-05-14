@@ -15,20 +15,31 @@ import igrek.projekt4bt.dispatcher.AbstractEvent;
 import igrek.projekt4bt.dispatcher.EventDispatcher;
 import igrek.projekt4bt.dispatcher.IEventConsumer;
 import igrek.projekt4bt.dispatcher.IEventObserver;
+import igrek.projekt4bt.events.ClearButtonEvent;
+import igrek.projekt4bt.events.ControlMotorsEvent;
 import igrek.projekt4bt.events.ShowInfoEvent;
 import igrek.projekt4bt.graphics.canvas.enums.Align;
 import igrek.projekt4bt.graphics.canvas.enums.Font;
+import igrek.projekt4bt.logic.ControlCommand;
 
 public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver {
 	
 	private List<String> infos = new ArrayList<>();
 	private final int INFO_FONT_SIZE = 17;
+	/**
+	 * minimalny odstęp w ms między kolejnymi komunikatami zmiany sterowania
+	 */
+	private final int CONTROL_COMMANDS_INTERVAL = 300;
 	
 	private final float CONTROL_MAP_WIDTH = 0.7f;
 	private final float CONTROL_DEAD_ZONE_H = 0.15f;
 	private final float CONTROL_MAX_RANGE_H = 0.1f;
+	private final float CONTROL_PWM_H = (1f - CONTROL_DEAD_ZONE_H - 2 * CONTROL_MAX_RANGE_H) / 2;
 	
 	private Context context;
+	
+	private long lastCommandTime = 0;
+	private ControlCommand lastCommand = null;
 	
 	public CanvasGraphics(Context context) {
 		super(context);
@@ -39,6 +50,7 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 	@Override
 	public void registerEvents() {
 		EventDispatcher.registerEventObserver(ShowInfoEvent.class, this);
+		EventDispatcher.registerEventObserver(ClearButtonEvent.class, this);
 	}
 	
 	@Override
@@ -49,6 +61,13 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 				SimpleDateFormat dateFormat = new SimpleDateFormat("[HH:mm:ss] ");
 				infos.add(dateFormat.format(new Date()) + e.getMessage());
 				clearOldInfos();
+				invalidate();
+			}
+		});
+		event.bind(ClearButtonEvent.class, new IEventConsumer<ClearButtonEvent>() {
+			@Override
+			public void accept(ClearButtonEvent e) {
+				infos.clear();
 				invalidate();
 			}
 		});
@@ -131,9 +150,15 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 		drawText("LEFT (0%)", w * (1f - CONTROL_MAP_WIDTH * 5 / 6), h / 2, Align.CENTER);
 		drawText("RIGHT (0%)", w * (1f - CONTROL_MAP_WIDTH * 1 / 6), h / 2, Align.CENTER);
 		
-		y = (CONTROL_MAX_RANGE_H + (1 - CONTROL_MAX_RANGE_H * 2 - CONTROL_DEAD_ZONE_H) / 4) * h;
+		drawText("LEFT (100%)", w * (1f - CONTROL_MAP_WIDTH * 5 / 6), h * CONTROL_MAX_RANGE_H / 2, Align.CENTER);
+		drawText("LEFT (100%)", w * (1f - CONTROL_MAP_WIDTH * 5 / 6), h - h * CONTROL_MAX_RANGE_H / 2, Align.CENTER);
+		
+		drawText("RIGHT (100%)", w * (1f - CONTROL_MAP_WIDTH * 1 / 6), h * CONTROL_MAX_RANGE_H / 2, Align.CENTER);
+		drawText("RIGHT (100%)", w * (1f - CONTROL_MAP_WIDTH * 1 / 6), h - h * CONTROL_MAX_RANGE_H / 2, Align.CENTER);
+		
+		y = (CONTROL_MAX_RANGE_H + (1f - CONTROL_MAX_RANGE_H * 2 - CONTROL_DEAD_ZONE_H) / 4) * h;
 		drawText("FORWARD (PWM)", w * (1f - CONTROL_MAP_WIDTH / 2), y, Align.CENTER);
-		y = (CONTROL_MAX_RANGE_H + CONTROL_DEAD_ZONE_H + (1 - CONTROL_MAX_RANGE_H * 2 - CONTROL_DEAD_ZONE_H) / 2 + (1 - CONTROL_MAX_RANGE_H * 2 - CONTROL_DEAD_ZONE_H) / 4) * h;
+		y = (CONTROL_MAX_RANGE_H + CONTROL_DEAD_ZONE_H + (1f - CONTROL_MAX_RANGE_H * 2 - CONTROL_DEAD_ZONE_H) / 2 + (1f - CONTROL_MAX_RANGE_H * 2 - CONTROL_DEAD_ZONE_H) / 4) * h;
 		drawText("BACKWARD (PWM)", w * (1f - CONTROL_MAP_WIDTH / 2), y, Align.CENTER);
 	}
 	
@@ -149,77 +174,80 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 	@Override
 	protected void onTouchDown(MotionEvent event) {
 		super.onTouchDown(event);
+		touchChanged(event.getX(), event.getY());
 	}
 	
 	@Override
 	protected void onTouchMove(MotionEvent event) {
-		
-		//		if (event.getPointerCount() >= 2) {
-		//
-		//			if (pointersDst0 != null) {
-		//				Float pointersDst1 = (float) Math.hypot(event.getX(1) - event.getX(0), event.getY(1) - event.getY(0));
-		//				float scale = (pointersDst1 / pointersDst0 - 1) * FONTSIZE_SCALE_FACTOR + 1;
-		//				float fontsize1 = fontsize0 * scale;
-		//				previewFontsize(fontsize1);
-		//			}
-		//
-		//		} else {
-		//
-		//			scroll = startScroll + startTouchY - event.getY();
-		//			float maxScroll = getMaxScroll();
-		//			if (scroll < 0) scroll = 0; //za duże przeskrolowanie w górę
-		//			if (scroll > maxScroll) scroll = maxScroll; // za duże przescrollowanie w dół
-		//			repaint();
-		//
-		//		}
+		touchChanged(event.getX(), event.getY());
 	}
 	
 	@Override
 	protected void onTouchUp(MotionEvent event) {
-		
-		float deltaX = event.getX() - startTouchX;
-		float deltaY = event.getY() - startTouchY;
-		// monitorowanie zmiany przewijania
-		float dScroll = -deltaY;
-		//		if (Math.abs(dScroll) > MIN_SCROLL_EVENT) {
-		//			AppController.sendEvent(new CanvasScrollEvent(dScroll, scroll));
-		//		}
-		//
-		//		//włączenie autoscrolla - szybkie kliknięcie na dole
-		//		float hypot = (float) Math.hypot(deltaX, deltaY);
-		//		if (hypot <= GESTURE_CLICK_MAX_HYPOT) { //kliknięcie w jednym miejscu
-		//			if (System.currentTimeMillis() - startTouchTime <= GESTURE_CLICK_MAX_TIME) { //szybkie kliknięcie
-		//				if (onScreenClicked(event.getX(), event.getY())) {
-		//					repaint();
-		//				}
-		//			}
-		//		}
+		touchReset();
 	}
 	
-	//	@Override
-	//	protected void onTouchPointerUp(MotionEvent event) {
-	//		AppController.sendEvent(new FontsizeChangedEvent(fontsize));
-	//		pointersDst0 = null; //reset poczatkowej długości
-	//		// reset na brak przewijania
-	//		startScroll = scroll;
-	//
-	//		//pozostawienie pointera, który jest jeszcze aktywny
-	//		Integer pointerIndex = 0;
-	//		if (event.getPointerCount() >= 2) {
-	//			for (int i = 0; i < event.getPointerCount(); i++) {
-	//				if (i != event.getActionIndex()) {
-	//					pointerIndex = i;
-	//					break;
-	//				}
-	//			}
-	//		}
-	//		startTouchY = event.getY(pointerIndex);
-	//	}
+	private void touchChanged(float x, float y) {
+		float MIN_X = w * (1f - CONTROL_MAP_WIDTH);
+		if (x >= MIN_X) {
+			touchControlChanged((x - MIN_X) / (CONTROL_MAP_WIDTH * w), y / h);
+		}
+	}
 	
-	//	@Override
-	//	protected void onTouchPointerDown(MotionEvent event) {
-	//		pointersDst0 = (float) Math.hypot(event.getX(1) - event.getX(0), event.getY(1) - event.getY(0));
-	//		fontsize0 = fontsize;
-	//	}
+	private void touchControlChanged(float rx, float ry) {
+		// rozpoznanie kierunku skręcania (lewo, prawo, brak)
+		int yaw = 0;
+		if (rx < 1f / 3) {
+			yaw = -1; // lewo
+		} else if (rx > 2f / 3) {
+			yaw = +1; // prawo
+		}
+		
+		// kierunek jazdy przód, tył, brak
+		int throttle = 0;
+		if (ry < CONTROL_MAX_RANGE_H + CONTROL_PWM_H) {
+			throttle = 1; // do przodu
+		} else if (ry > 1f - CONTROL_MAX_RANGE_H - CONTROL_PWM_H) {
+			throttle = -1; // do tyłu
+		}
+		
+		// moc - prędkość [0 - 1]
+		float power = 0;
+		if (throttle != 0) {
+			float ry2 = ry;
+			if (throttle == -1) {
+				ry2 = 1f - ry;
+			}
+			if (ry2 <= CONTROL_MAX_RANGE_H) {
+				power = 1f; // 100 %
+			} else {
+				power = 1f - (ry2 - CONTROL_MAX_RANGE_H) / CONTROL_PWM_H;
+			}
+		}
+		
+		controlParametersChanged(new ControlCommand(yaw, throttle, power));
+	}
+	
+	private void controlParametersChanged(ControlCommand newCommand) {
+		
+		// wyślij, jeśli to pierwsza komenda, zmieniła się znacząco od poprzedniej lub gdy upłynął czas od wysłania ostatniej komendy
+		if (lastCommand == null || (!lastCommand.equals(newCommand) && (lastCommand.changedStrongly(newCommand) || System
+				.currentTimeMillis() > lastCommandTime + CONTROL_COMMANDS_INTERVAL))) {
+			
+			//			Logs.debug("yaw: " + newCommand.getYaw() + ", throttle: " + newCommand.getThrottle() + ", power: " + newCommand
+			//					.getPower());
+			
+			lastCommand = newCommand;
+			lastCommandTime = System.currentTimeMillis();
+			
+			EventDispatcher.sendEvent(new ControlMotorsEvent(newCommand));
+		}
+		
+		
+	}
+	
+	private void touchReset() {
+		EventDispatcher.sendEvent(new ControlMotorsEvent(new ControlCommand(0, 0, 0f)));
+	}
 	
 }

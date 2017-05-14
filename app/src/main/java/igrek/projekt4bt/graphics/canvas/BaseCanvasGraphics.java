@@ -39,6 +39,8 @@ public class BaseCanvasGraphics extends View {
 		paint.setFilterBitmap(true);
 		//paint.setDither(true);
 		
+		//		setWillNotDraw(false);
+		
 		getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
 			@Override
 			public void onGlobalLayout() {
