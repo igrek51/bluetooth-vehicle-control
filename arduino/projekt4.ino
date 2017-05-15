@@ -1,6 +1,6 @@
-int enabledPins = 7;
-char delimiter = '\n'; // separator poleceń z BT
+int enabledPins = 9;
 
+char delimiter = '\n'; // separator poleceń z BT
 String rxBuffer; // bufor danych otrzymanych z BT
 
 unsigned long lastHeartBeat = 0; // czas od ostatniego komunikatu HeartBeat utrzymującego połączenie
@@ -46,11 +46,13 @@ void loop() {
 int apiNumber2Pin(int apiNumber){
   if(apiNumber == 1) return 2;
   if(apiNumber == 2) return 3;
-  if(apiNumber == 3) return 5;
-  if(apiNumber == 4) return 6;
-  if(apiNumber == 5) return 9;
-  if(apiNumber == 6) return 10;
-  if(apiNumber == 7) return 11;
+  if(apiNumber == 3) return 4;
+  if(apiNumber == 4) return 5;
+  if(apiNumber == 5) return 6;
+  if(apiNumber == 6) return 7;
+  if(apiNumber == 7) return 8;
+  if(apiNumber == 8) return 9;
+  if(apiNumber == 9) return 10;
   return -1;
 }
 
