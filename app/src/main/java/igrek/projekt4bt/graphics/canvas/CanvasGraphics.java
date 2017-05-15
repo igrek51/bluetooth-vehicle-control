@@ -198,14 +198,21 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 	
 	@Override
 	protected void onTouchUp(MotionEvent event) {
-		touchReset();
+		if (isInControlArea(event.getX(), event.getY())) {
+			touchReset();
+		}
 	}
 	
 	private void touchChanged(float x, float y) {
 		float MIN_X = w * (1f - CONTROL_MAP_WIDTH);
-		if (x >= MIN_X) {
+		if (isInControlArea(x, y)) {
 			touchControlChanged((x - MIN_X) / (CONTROL_MAP_WIDTH * w), y / h);
 		}
+	}
+	
+	private boolean isInControlArea(float x, float y) {
+		float MIN_X = w * (1f - CONTROL_MAP_WIDTH);
+		return x >= MIN_X;
 	}
 	
 	private void touchControlChanged(float rx, float ry) {
