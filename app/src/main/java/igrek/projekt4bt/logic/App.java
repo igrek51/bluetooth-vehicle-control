@@ -23,6 +23,7 @@ import igrek.projekt4bt.events.ShowInfoEvent;
 import igrek.projekt4bt.events.StatusButtonEvent;
 import igrek.projekt4bt.events.TestButtonEvent;
 import igrek.projekt4bt.graphics.canvas.CanvasGraphics;
+import igrek.projekt4bt.graphics.canvas.InfoMessage;
 import igrek.projekt4bt.logger.Logs;
 
 public class App extends BaseApp implements IEventObserver {
@@ -57,7 +58,7 @@ public class App extends BaseApp implements IEventObserver {
 	
 	private void showInfo(String message) {
 		Logs.info(message);
-		EventDispatcher.sendEvent(new ShowInfoEvent(message));
+		EventDispatcher.sendEvent(new ShowInfoEvent(message, InfoMessage.ShowInfoType.OK));
 	}
 	
 	private void bindButtons() {
@@ -112,6 +113,7 @@ public class App extends BaseApp implements IEventObserver {
 	
 	@Override
 	public void quit() {
+		bt.disconnect();
 		super.quit();
 	}
 	

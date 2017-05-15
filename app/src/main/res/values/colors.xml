@@ -10,6 +10,8 @@
     <color name="background">#000000</color>
     <color name="controlArea">#7bffff</color>
     <color name="outlineControlArea">#2b9c9c</color>
-    <color name="infoText">#00b000</color>
+    <color name="infoTextOK">#00b000</color>
+    <color name="infoTextError">#e21b1b</color>
+    <color name="infoTextBT">#4444f4</color>
 
 </resources>

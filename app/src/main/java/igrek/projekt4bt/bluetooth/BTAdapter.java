@@ -19,12 +19,14 @@ import igrek.projekt4bt.dispatcher.IEventObserver;
 import igrek.projekt4bt.events.BTDataReceivedEvent;
 import igrek.projekt4bt.events.ConnectButtonEvent;
 import igrek.projekt4bt.events.ControlMotorsEvent;
+import igrek.projekt4bt.events.ControlResetEvent;
 import igrek.projekt4bt.events.DisconnectButtonEvent;
 import igrek.projekt4bt.events.ReloadButtonEvent;
 import igrek.projekt4bt.events.ShootButtonEvent;
 import igrek.projekt4bt.events.ShowInfoEvent;
 import igrek.projekt4bt.events.StatusButtonEvent;
 import igrek.projekt4bt.events.TestButtonEvent;
+import igrek.projekt4bt.graphics.canvas.InfoMessage;
 import igrek.projekt4bt.logger.Logs;
 import igrek.projekt4bt.logic.ControlCommand;
 
@@ -37,10 +39,11 @@ public class BTAdapter implements IEventObserver {
 	
 	private BluetoothSocket socket;
 	
+	private final long HEARTBEAT_INTERVAL = 1000; // okres wysyłania komunikatu utrzymującego połączenie [ms]
+	
 	Thread workerThread;
 	byte[] readBuffer;
 	int readBufferPosition;
-	int counter;
 	volatile boolean stopWorker;
 	
 	public BTAdapter() {
@@ -56,6 +59,7 @@ public class BTAdapter implements IEventObserver {
 		EventDispatcher.registerEventObserver(ShootButtonEvent.class, this);
 		EventDispatcher.registerEventObserver(ReloadButtonEvent.class, this);
 		EventDispatcher.registerEventObserver(ControlMotorsEvent.class, this);
+		EventDispatcher.registerEventObserver(ControlResetEvent.class, this);
 	}
 	
 	@Override
@@ -122,20 +126,31 @@ public class BTAdapter implements IEventObserver {
 			}
 		});
 		
+		event.bind(ControlResetEvent.class, new IEventConsumer<ControlResetEvent>() {
+			@Override
+			public void accept(ControlResetEvent e) {
+				sendResetMotors();
+			}
+		});
+		
 	}
 	
 	private void showInfo(String message) {
 		Logs.info(message);
-		EventDispatcher.sendNow(new ShowInfoEvent(message));
+		EventDispatcher.sendNow(new ShowInfoEvent(message, InfoMessage.ShowInfoType.OK));
 	}
 	
 	private void showError(String message) {
-		//TODO inny kolor wiadomości w przypadku błędu
 		Logs.error(message);
-		EventDispatcher.sendNow(new ShowInfoEvent("ERROR: " + message));
+		EventDispatcher.sendNow(new ShowInfoEvent("ERROR: " + message, InfoMessage.ShowInfoType.ERROR));
 	}
 	
 	private void connect() {
+		
+		if (isConnected()) {
+			showError("Already connected");
+			return;
+		}
 		
 		BluetoothAdapter blueAdapter = BluetoothAdapter.getDefaultAdapter();
 		if (blueAdapter != null && blueAdapter.isEnabled()) {
@@ -162,6 +177,7 @@ public class BTAdapter implements IEventObserver {
 				showInfo("Device connected: " + device.getName());
 				
 				listenForData();
+				startHeartBeatTimer();
 			} catch (IOException e) {
 				showError("Failed connecting to device: " + e.getMessage());
 			}
@@ -171,16 +187,25 @@ public class BTAdapter implements IEventObserver {
 		}
 	}
 	
-	public void send(String s) {
-		try {
+	public synchronized void send(String s) {
+		
+		if (!isConnected()) {
+			showError("Not connected");
+			return;
+		}
+		
 			showInfo("Sending data: " + s);
 			if (outputStream == null) {
 				showError("No output stream.");
 				return;
 			}
+		
+		try {
 			outputStream.write((s + "\n").getBytes());
 		} catch (IOException e) {
+			Logs.error(e);
 			showError("Sending failed: " + e.getMessage());
+			disconnect();
 		}
 	}
 	
@@ -195,8 +220,6 @@ public class BTAdapter implements IEventObserver {
 			public void run() {
 				while (!Thread.currentThread().isInterrupted() && !stopWorker) {
 					try {
-						// TODO disconnect detection
-						
 						int bytesAvailable = inStream.available();
 						if (bytesAvailable > 0) {
 							byte[] packetBytes = new byte[bytesAvailable];
@@ -229,9 +252,27 @@ public class BTAdapter implements IEventObserver {
 		workerThread.start();
 	}
 	
+	private void startHeartBeatTimer() {
+		final Handler h2 = new Handler();
+		Runnable r = new Runnable() {
+			@Override
+			public void run() {
+				if (isConnected()) {
+					send("HBT");
+					h2.postDelayed(this, HEARTBEAT_INTERVAL);
+				}
+			}
+		};
+		h2.post(r);
+	}
+	
+	private boolean isConnected() {
+		return socket != null && socket.isConnected();
+	}
+	
 	private void receivedData(String data) {
 		Logs.debug("BT data received: " + data);
-		EventDispatcher.sendNow(new ShowInfoEvent("BT: " + data));
+		EventDispatcher.sendNow(new ShowInfoEvent("BT: " + data, InfoMessage.ShowInfoType.BT_RECEIVED));
 		
 		// split received message by line feeds
 		for (String line : data.split("\\r|\\n")) {
@@ -248,7 +289,6 @@ public class BTAdapter implements IEventObserver {
 	}
 	
 	public void disconnect() {
-		// TODO if connected
 		try {
 			stopWorker = true;
 			if (outputStream != null)
@@ -277,7 +317,7 @@ public class BTAdapter implements IEventObserver {
 	}
 	
 	private void showStatus() {
-		//TODO
+		showInfo("connected: " + isConnected());
 	}
 	
 	private void sendShoot() {
@@ -321,5 +361,13 @@ public class BTAdapter implements IEventObserver {
 	private void sendPWMSpeed(float power) {
 		int pwmFactor = (int) (power * 100);
 		send("PWM 4 " + pwmFactor);
+	}
+	
+	private void sendResetMotors() {
+		send("RST 1");
+		send("RST 2");
+		send("RST 3");
+		send("RST 4");
+		send("RST 6");
 	}
 }

@@ -7,7 +7,6 @@ import android.view.MotionEvent;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import igrek.projekt4bt.R;
@@ -17,6 +16,7 @@ import igrek.projekt4bt.dispatcher.IEventConsumer;
 import igrek.projekt4bt.dispatcher.IEventObserver;
 import igrek.projekt4bt.events.ClearButtonEvent;
 import igrek.projekt4bt.events.ControlMotorsEvent;
+import igrek.projekt4bt.events.ControlResetEvent;
 import igrek.projekt4bt.events.ShowInfoEvent;
 import igrek.projekt4bt.graphics.canvas.enums.Align;
 import igrek.projekt4bt.graphics.canvas.enums.Font;
@@ -24,7 +24,7 @@ import igrek.projekt4bt.logic.ControlCommand;
 
 public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver {
 	
-	private List<String> infos = new ArrayList<>();
+	private List<InfoMessage> infos = new ArrayList<>();
 	private final int INFO_FONT_SIZE = 17;
 	/**
 	 * minimalny odstęp w ms między kolejnymi komunikatami zmiany sterowania
@@ -58,8 +58,7 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 		event.bind(ShowInfoEvent.class, new IEventConsumer<ShowInfoEvent>() {
 			@Override
 			public void accept(ShowInfoEvent e) {
-				SimpleDateFormat dateFormat = new SimpleDateFormat("[HH:mm:ss] ");
-				infos.add(dateFormat.format(new Date()) + e.getMessage());
+				infos.add(e.getInfoMessage());
 				clearOldInfos();
 				invalidate();
 			}
@@ -106,9 +105,24 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 		int y = 5;
 		setFont(Font.FONT_NORMAL);
 		setFontSize(INFO_FONT_SIZE);
-		setColor(resourceColor(R.color.infoText));
-		for (String info : infos) {
-			drawText(info, 0, y, Align.TOP_LEFT);
+		
+		SimpleDateFormat dateFormat = new SimpleDateFormat("[HH:mm:ss] ");
+		
+		for (InfoMessage info : infos) {
+			// kolor w zależności od typu wiadomości
+			switch (info.getType()) {
+				case OK:
+					setColor(resourceColor(R.color.infoTextOK));
+					break;
+				case ERROR:
+					setColor(resourceColor(R.color.infoTextError));
+					break;
+				case BT_RECEIVED:
+					setColor(resourceColor(R.color.infoTextBT));
+					break;
+			}
+			
+			drawText(dateFormat.format(info.getTime()) + info.getMessage(), 0, y, Align.TOP_LEFT);
 			y += INFO_FONT_SIZE;
 		}
 	}
@@ -247,7 +261,7 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 	}
 	
 	private void touchReset() {
-		EventDispatcher.sendEvent(new ControlMotorsEvent(new ControlCommand(0, 0, 0f)));
+		EventDispatcher.sendEvent(new ControlResetEvent());
 		lastCommand = null;
 		lastCommandTime = System.currentTimeMillis();
 	}
