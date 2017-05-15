@@ -248,6 +248,8 @@ public class CanvasGraphics extends BaseCanvasGraphics implements IEventObserver
 	
 	private void touchReset() {
 		EventDispatcher.sendEvent(new ControlMotorsEvent(new ControlCommand(0, 0, 0f)));
+		lastCommand = null;
+		lastCommandTime = System.currentTimeMillis();
 	}
 	
 }
