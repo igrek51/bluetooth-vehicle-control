@@ -40,6 +40,16 @@ public class BTAdapter implements IEventObserver {
 	private BluetoothSocket socket;
 	
 	private final long HEARTBEAT_INTERVAL = 1000; // okres wysyłania komunikatu utrzymującego połączenie [ms]
+	private final long SHOOT_TIME = 300;
+	private final long RELOAD_TIME = 300;
+	
+	private final int PIN_LEFT = 1;
+	private final int PIN_RIGHT = 2;
+	private final int PIN_FORWARD = 3;
+	private final int PIN_BACKWARD = 4;
+	private final int PIN_POWER = 5;
+	private final int PIN_SHOOT = 6;
+	private final int PIN_RELOAD = 7;
 	
 	Thread workerThread;
 	byte[] readBuffer;
@@ -194,11 +204,11 @@ public class BTAdapter implements IEventObserver {
 			return;
 		}
 		
-			showInfo("Sending data: " + s);
-			if (outputStream == null) {
-				showError("No output stream.");
-				return;
-			}
+		showInfo("Sending: " + s);
+		if (outputStream == null) {
+			showError("No output stream.");
+			return;
+		}
 		
 		try {
 			outputStream.write((s + "\n").getBytes());
@@ -321,53 +331,65 @@ public class BTAdapter implements IEventObserver {
 	}
 	
 	private void sendShoot() {
-		send("SET 5");
-		send("RST 7");
+		send("RST " + PIN_RELOAD);
+		send("SET " + PIN_SHOOT);
+		new Handler().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				send("RST " + PIN_SHOOT);
+			}
+		}, SHOOT_TIME);
 	}
 	
 	private void sendReload() {
-		send("SET 7");
-		send("RST 5");
+		send("RST " + PIN_SHOOT);
+		send("SET " + PIN_RELOAD);
+		new Handler().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				send("RST " + PIN_RELOAD);
+			}
+		}, RELOAD_TIME);
 	}
 	
 	private void controlMotors(ControlCommand controls) {
 		// skręcanie
 		if (controls.getYaw() == -1) {
-			send("SET 1");
-			send("RST 2");
+			send("SET " + PIN_LEFT);
+			send("RST " + PIN_RIGHT);
 		} else if (controls.getYaw() == +1) {
-			send("RST 1");
-			send("SET 2");
+			send("RST " + PIN_LEFT);
+			send("SET " + PIN_RIGHT);
 		} else {
-			send("RST 1");
-			send("RST 2");
+			send("RST " + PIN_LEFT);
+			send("RST " + PIN_RIGHT);
 		}
 		// prędkość jazdy przód - tył
 		if (controls.getThrottle() == -1) {
-			send("SET 3");
+			send("SET " + PIN_BACKWARD);
+			send("RST " + PIN_FORWARD);
 			sendPWMSpeed(controls.getPower());
-			send("RST 6");
 		} else if (controls.getThrottle() == +1) {
-			send("RST 3");
+			send("RST " + PIN_BACKWARD);
+			send("SET " + PIN_FORWARD);
 			sendPWMSpeed(controls.getPower());
-			send("SET 6");
 		} else {
-			send("RST 3");
-			send("RST 4");
-			send("RST 6");
+			send("RST " + PIN_BACKWARD);
+			send("RST " + PIN_FORWARD);
+			send("RST " + PIN_POWER);
 		}
 	}
 	
 	private void sendPWMSpeed(float power) {
 		int pwmFactor = (int) (power * 100);
-		send("PWM 4 " + pwmFactor);
+		send("PWM " + PIN_POWER + " " + pwmFactor);
 	}
 	
 	private void sendResetMotors() {
-		send("RST 1");
-		send("RST 2");
-		send("RST 3");
-		send("RST 4");
-		send("RST 6");
+		send("RST " + PIN_LEFT);
+		send("RST " + PIN_RIGHT);
+		send("RST " + PIN_BACKWARD);
+		send("RST " + PIN_FORWARD);
+		send("RST " + PIN_POWER);
 	}
 }
