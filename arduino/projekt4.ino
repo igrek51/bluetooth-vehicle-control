@@ -1,4 +1,4 @@
-int enabledPins = 9;
+int enabledPins = 12; // liczba dostępnych pinów do zmiany stanu
 
 char delimiter = '\n'; // separator poleceń z BT
 String rxBuffer; // bufor danych otrzymanych z BT
@@ -11,8 +11,8 @@ void setup() {
   for(int i=1; i<=enabledPins; i++){
     int pin = apiNumber2Pin(i);
     pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW);
   }
+  resetAllPins();
   // komunikacja BT
   Serial.begin(9600); // baud rate
   rxBuffer = "";
@@ -34,7 +34,7 @@ void loop() {
   // sprawdzenie, czy nie minął za długi czas od ostatniego heartBeat
   if (millis() > lastHeartBeat + HEARTBEAT_TIMEOUT){
     // automatyczne wyłączenie zasilania silników w przypadku utraty łączności
-    commandResetAll();
+    resetAllPins();
     updateHeartBeat();
     send("HeartBeat timeout");
   }
@@ -53,7 +53,22 @@ int apiNumber2Pin(int apiNumber){
   if(apiNumber == 7) return 8;
   if(apiNumber == 8) return 9;
   if(apiNumber == 9) return 10;
+  if(apiNumber == 10) return 11;
+  if(apiNumber == 11) return 12;
+  if(apiNumber == 12) return 13;
   return -1;
+}
+
+void resetAllPins(){
+  for(int i=1; i<=enabledPins; i++){
+    int pin = apiNumber2Pin(i);
+    bool defaultState = LOW;
+//    if (pin == 7 || pin == 8){
+//      // odwrotna logika
+//      defaultState = HIGH;
+//    }
+    digitalWrite(pin, defaultState);
+  }
 }
 
 int apiNumber2Pin(String apiNumber){
@@ -99,7 +114,7 @@ void parseCommand(String cmd) {
     } else if (code == "STA") { // resend all pin states
       commandStatus();
     } else if (code == "RTA") { // reset all pin states
-      commandResetAll();
+      resetAllPins();
     } else if (code == "HBT") { // heartbeat - keep alive
       updateHeartBeat();
     } else {
@@ -159,13 +174,6 @@ void commandPWM(String rest){
   }
   // ustawienie wyjścia jako PWM
   analogWrite(pinNumber, 255 * pulseWidth / 100); // maksymalna wartość wypełnienia to 255
-}
-
-void commandResetAll(){
-  for(int i=1; i<=enabledPins; i++){
-    int pin = apiNumber2Pin(i);
-    digitalWrite(pin, LOW);
-  }
 }
 
 void updateHeartBeat(){
