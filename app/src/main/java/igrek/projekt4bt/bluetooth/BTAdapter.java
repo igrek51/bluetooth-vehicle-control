@@ -40,8 +40,8 @@ public class BTAdapter implements IEventObserver {
 	private BluetoothSocket socket;
 	
 	private final long HEARTBEAT_INTERVAL = 1000; // okres wysyłania komunikatu utrzymującego połączenie [ms]
-	private final long SHOOT_TIME = 300;
-	private final long RELOAD_TIME = 300;
+	private final long SHOOT_TIME = 400;
+	private final long RELOAD_TIME = 400;
 	private final long AIM_TIME = 3000;
 	
 	private final int PIN_LEFT = 1;
