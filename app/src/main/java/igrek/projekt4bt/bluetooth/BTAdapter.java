@@ -16,6 +16,7 @@ import igrek.projekt4bt.dispatcher.AbstractEvent;
 import igrek.projekt4bt.dispatcher.EventDispatcher;
 import igrek.projekt4bt.dispatcher.IEventConsumer;
 import igrek.projekt4bt.dispatcher.IEventObserver;
+import igrek.projekt4bt.events.AimButtonEvent;
 import igrek.projekt4bt.events.BTDataReceivedEvent;
 import igrek.projekt4bt.events.ConnectButtonEvent;
 import igrek.projekt4bt.events.ControlMotorsEvent;
@@ -24,7 +25,6 @@ import igrek.projekt4bt.events.DisconnectButtonEvent;
 import igrek.projekt4bt.events.ReloadButtonEvent;
 import igrek.projekt4bt.events.ShootButtonEvent;
 import igrek.projekt4bt.events.ShowInfoEvent;
-import igrek.projekt4bt.events.StatusButtonEvent;
 import igrek.projekt4bt.events.TestButtonEvent;
 import igrek.projekt4bt.graphics.canvas.InfoMessage;
 import igrek.projekt4bt.logger.Logs;
@@ -42,6 +42,7 @@ public class BTAdapter implements IEventObserver {
 	private final long HEARTBEAT_INTERVAL = 1000; // okres wysyłania komunikatu utrzymującego połączenie [ms]
 	private final long SHOOT_TIME = 300;
 	private final long RELOAD_TIME = 300;
+	private final long AIM_TIME = 3000;
 	
 	private final int PIN_LEFT = 1;
 	private final int PIN_RIGHT = 2;
@@ -50,6 +51,7 @@ public class BTAdapter implements IEventObserver {
 	private final int PIN_POWER = 5;
 	private final int PIN_SHOOT = 6;
 	private final int PIN_RELOAD = 7;
+	private final int PIN_AIM = 8;
 	
 	Thread workerThread;
 	byte[] readBuffer;
@@ -65,9 +67,9 @@ public class BTAdapter implements IEventObserver {
 		EventDispatcher.registerEventObserver(ConnectButtonEvent.class, this);
 		EventDispatcher.registerEventObserver(DisconnectButtonEvent.class, this);
 		EventDispatcher.registerEventObserver(TestButtonEvent.class, this);
-		EventDispatcher.registerEventObserver(StatusButtonEvent.class, this);
 		EventDispatcher.registerEventObserver(ShootButtonEvent.class, this);
 		EventDispatcher.registerEventObserver(ReloadButtonEvent.class, this);
+		EventDispatcher.registerEventObserver(AimButtonEvent.class, this);
 		EventDispatcher.registerEventObserver(ControlMotorsEvent.class, this);
 		EventDispatcher.registerEventObserver(ControlResetEvent.class, this);
 	}
@@ -108,13 +110,6 @@ public class BTAdapter implements IEventObserver {
 			}
 		});
 		
-		event.bind(StatusButtonEvent.class, new IEventConsumer<StatusButtonEvent>() {
-			@Override
-			public void accept(StatusButtonEvent e) {
-				showStatus();
-			}
-		});
-		
 		event.bind(ShootButtonEvent.class, new IEventConsumer<ShootButtonEvent>() {
 			@Override
 			public void accept(ShootButtonEvent e) {
@@ -126,6 +121,13 @@ public class BTAdapter implements IEventObserver {
 			@Override
 			public void accept(ReloadButtonEvent e) {
 				sendReload();
+			}
+		});
+		
+		event.bind(AimButtonEvent.class, new IEventConsumer<AimButtonEvent>() {
+			@Override
+			public void accept(AimButtonEvent e) {
+				sendAim();
 			}
 		});
 		
@@ -188,6 +190,8 @@ public class BTAdapter implements IEventObserver {
 				
 				listenForData();
 				startHeartBeatTimer();
+				
+				sendResetAll();
 			} catch (IOException e) {
 				showError("Failed connecting to device: " + e.getMessage());
 			}
@@ -293,9 +297,7 @@ public class BTAdapter implements IEventObserver {
 	}
 	
 	private void receivedPacket(String packet) {
-		
 		EventDispatcher.sendEvent(new BTDataReceivedEvent(packet));
-		
 	}
 	
 	public void disconnect() {
@@ -323,60 +325,75 @@ public class BTAdapter implements IEventObserver {
 	}
 	
 	private void testConnection() {
+		showInfo("connected: " + isConnected());
 		send("TST");
 	}
 	
-	private void showStatus() {
-		showInfo("connected: " + isConnected());
+	private void sendSetHi(int pin) {
+		send("SET " + pin);
+	}
+	
+	private void sendSetLo(int pin) {
+		send("RST " + pin);
 	}
 	
 	private void sendShoot() {
-		send("RST " + PIN_RELOAD);
-		send("SET " + PIN_SHOOT);
+		sendSetLo(PIN_RELOAD);
+		sendSetHi(PIN_SHOOT);
 		new Handler().postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				send("RST " + PIN_SHOOT);
+				sendSetLo(PIN_SHOOT);
 			}
 		}, SHOOT_TIME);
 	}
 	
 	private void sendReload() {
-		send("RST " + PIN_SHOOT);
-		send("SET " + PIN_RELOAD);
+		sendSetLo(PIN_SHOOT);
+		sendSetHi(PIN_RELOAD);
 		new Handler().postDelayed(new Runnable() {
 			@Override
 			public void run() {
-				send("RST " + PIN_RELOAD);
+				sendSetLo(PIN_RELOAD);
 			}
 		}, RELOAD_TIME);
+	}
+	
+	private void sendAim() {
+		sendSetHi(PIN_AIM);
+		new Handler().postDelayed(new Runnable() {
+			@Override
+			public void run() {
+				sendSetLo(PIN_AIM);
+			}
+		}, AIM_TIME);
 	}
 	
 	private void controlMotors(ControlCommand controls) {
 		// skręcanie
 		if (controls.getYaw() == -1) {
-			send("SET " + PIN_LEFT);
-			send("RST " + PIN_RIGHT);
+			sendSetHi(PIN_LEFT);
+			sendSetLo(PIN_RIGHT);
 		} else if (controls.getYaw() == +1) {
-			send("RST " + PIN_LEFT);
-			send("SET " + PIN_RIGHT);
+			sendSetLo(PIN_LEFT);
+			sendSetHi(PIN_RIGHT);
 		} else {
-			send("RST " + PIN_LEFT);
-			send("RST " + PIN_RIGHT);
+			sendSetLo(PIN_LEFT);
+			sendSetLo(PIN_RIGHT);
 		}
 		// prędkość jazdy przód - tył
 		if (controls.getThrottle() == -1) {
-			send("SET " + PIN_BACKWARD);
-			send("RST " + PIN_FORWARD);
+			sendSetLo(PIN_FORWARD);
+			sendSetHi(PIN_BACKWARD);
 			sendPWMSpeed(controls.getPower());
 		} else if (controls.getThrottle() == +1) {
-			send("RST " + PIN_BACKWARD);
-			send("SET " + PIN_FORWARD);
+			sendSetHi(PIN_FORWARD);
+			sendSetLo(PIN_BACKWARD);
 			sendPWMSpeed(controls.getPower());
 		} else {
-			send("RST " + PIN_BACKWARD);
-			send("RST " + PIN_FORWARD);
-			send("RST " + PIN_POWER);
+			sendSetLo(PIN_FORWARD);
+			sendSetLo(PIN_BACKWARD);
+			sendSetLo(PIN_POWER);
 		}
 	}
 	
@@ -386,10 +403,14 @@ public class BTAdapter implements IEventObserver {
 	}
 	
 	private void sendResetMotors() {
-		send("RST " + PIN_LEFT);
-		send("RST " + PIN_RIGHT);
-		send("RST " + PIN_BACKWARD);
-		send("RST " + PIN_FORWARD);
-		send("RST " + PIN_POWER);
+		sendSetLo(PIN_LEFT);
+		sendSetLo(PIN_RIGHT);
+		sendSetLo(PIN_FORWARD);
+		sendSetLo(PIN_BACKWARD);
+		sendSetLo(PIN_POWER);
+	}
+	
+	private void sendResetAll() {
+		send("RTA");
 	}
 }

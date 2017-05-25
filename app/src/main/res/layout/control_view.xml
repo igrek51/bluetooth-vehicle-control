@@ -42,13 +42,6 @@
                 android:text="Test"/>
 
             <Button
-                android:id="@+id/buttonStatus"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:text="Status"/>
-
-            <Button
                 android:id="@+id/buttonShoot"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
@@ -61,6 +54,13 @@
                 android:layout_height="0dp"
                 android:layout_weight="1"
                 android:text="Reload"/>
+
+            <Button
+                android:id="@+id/buttonAim"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="Aim"/>
 
             <Button
                 android:id="@+id/buttonClear"

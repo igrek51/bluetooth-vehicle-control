@@ -13,6 +13,7 @@ import igrek.projekt4bt.dispatcher.AbstractEvent;
 import igrek.projekt4bt.dispatcher.EventDispatcher;
 import igrek.projekt4bt.dispatcher.IEventConsumer;
 import igrek.projekt4bt.dispatcher.IEventObserver;
+import igrek.projekt4bt.events.AimButtonEvent;
 import igrek.projekt4bt.events.ClearButtonEvent;
 import igrek.projekt4bt.events.ConnectButtonEvent;
 import igrek.projekt4bt.events.DisconnectButtonEvent;
@@ -20,7 +21,6 @@ import igrek.projekt4bt.events.ReloadButtonEvent;
 import igrek.projekt4bt.events.ResizedEvent;
 import igrek.projekt4bt.events.ShootButtonEvent;
 import igrek.projekt4bt.events.ShowInfoEvent;
-import igrek.projekt4bt.events.StatusButtonEvent;
 import igrek.projekt4bt.events.TestButtonEvent;
 import igrek.projekt4bt.graphics.canvas.CanvasGraphics;
 import igrek.projekt4bt.graphics.canvas.InfoMessage;
@@ -86,12 +86,6 @@ public class App extends BaseApp implements IEventObserver {
 				EventDispatcher.sendEvent(new ShootButtonEvent());
 			}
 		});
-		activity.findViewById(R.id.buttonStatus).setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				EventDispatcher.sendEvent(new StatusButtonEvent());
-			}
-		});
 		activity.findViewById(R.id.buttonTest).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -102,6 +96,12 @@ public class App extends BaseApp implements IEventObserver {
 			@Override
 			public void onClick(View v) {
 				EventDispatcher.sendEvent(new ClearButtonEvent());
+			}
+		});
+		activity.findViewById(R.id.buttonAim).setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				EventDispatcher.sendEvent(new AimButtonEvent());
 			}
 		});
 	}
